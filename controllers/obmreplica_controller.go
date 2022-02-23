@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -50,6 +51,13 @@ func (r *ObmReplicaReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
+	var replicaList obmv1.ObmReplicaList
+	if err := r.List(ctx, &replicaList, client.InNamespace(req.Namespace)); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+	for _, i := range replicaList.Items {
+		fmt.Println(i.Spec.WatchNamespace.Name)
+	}
 
 	return ctrl.Result{}, nil
 }
