@@ -1,0 +1,24 @@
+# permissions for end users to edit obmreplicas.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: obmreplica-editor-role
+rules:
+- apiGroups:
+  - obm.obm.datacommand
+  resources:
+  - obmreplicas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - obm.obm.datacommand
+  resources:
+  - obmreplicas/status
+  verbs:
+  - get

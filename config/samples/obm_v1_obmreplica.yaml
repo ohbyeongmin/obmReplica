@@ -1,0 +1,6 @@
+apiVersion: obm.obm.datacommand/v1
+kind: ObmReplica
+metadata:
+  name: obmreplica-sample
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,16 @@
+domain: obm.datacommand
+layout:
+- go.kubebuilder.io/v3
+projectName: obmreplica
+repo: obm.datacommand/obmReplica
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: obm.datacommand
+  group: obm
+  kind: ObmReplica
+  path: obm.datacommand/obmReplica/api/v1
+  version: v1
+version: "3"
