@@ -32,8 +32,7 @@ type ObmReplicaSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of ObmReplica. Edit obmreplica_types.go to remove/update
-	Foo            string    `json:"foo,omitempty"`
-	WatchNamespace Namespace `json:"watchNamespace,omitempty"`
+	TargetNamespace Namespace `json:"targetNamespace,omitempty"`
 }
 
 // ObmReplicaStatus defines the observed state of ObmReplica

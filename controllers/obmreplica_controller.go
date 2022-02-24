@@ -18,14 +18,14 @@ package controllers
 
 import (
 	"context"
-	"fmt"
-
+	dapps "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	obmv1 "obm.datacommand/obmReplica/api/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	obmv1 "obm.datacommand/obmReplica/api/v1"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // ObmReplicaReconciler reconciles a ObmReplica object
@@ -37,6 +37,8 @@ type ObmReplicaReconciler struct {
 //+kubebuilder:rbac:groups=obm.obm.datacommand,resources=obmreplicas,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=obm.obm.datacommand,resources=obmreplicas/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=obm.obm.datacommand,resources=obmreplicas/finalizers,verbs=update
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -51,12 +53,32 @@ func (r *ObmReplicaReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
-	var replicaList obmv1.ObmReplicaList
-	if err := r.List(ctx, &replicaList, client.InNamespace(req.Namespace)); err != nil {
+	var obmReplica obmv1.ObmReplicaList
+	if err := r.List(ctx, &obmReplica, client.InNamespace(req.Namespace)); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	for _, i := range replicaList.Items {
-		fmt.Println(i.Spec.WatchNamespace.Name)
+
+	if len(obmReplica.Items) == 0 {
+		return ctrl.Result{}, nil
+	}
+
+	var targetNamespace string
+	for _, i := range obmReplica.Items {
+		targetNamespace = i.Spec.TargetNamespace.Name
+	}
+
+	var deployments dapps.DeploymentList
+	if err := r.List(ctx, &deployments, client.InNamespace(req.Namespace)); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	for _, i := range deployments.Items {
+		i.Namespace = targetNamespace
+		i.ResourceVersion = ""
+		log.Log.Info("create deployment", targetNamespace, i.Name)
+		if err := r.Create(ctx, &i); err != nil {
+			return ctrl.Result{}, client.IgnoreNotFound(err)
+		}
 	}
 
 	return ctrl.Result{}, nil
@@ -66,5 +88,10 @@ func (r *ObmReplicaReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *ObmReplicaReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&obmv1.ObmReplica{}).
+		Owns(&dapps.Deployment{}).
+		Watches(
+			&source.Kind{Type: &dapps.Deployment{}},
+			&handler.EnqueueRequestForObject{},
+		).
 		Complete(r)
 }

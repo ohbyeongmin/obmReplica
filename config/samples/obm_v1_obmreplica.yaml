@@ -1,7 +1,8 @@
 apiVersion: obm.obm.datacommand/v1
 kind: ObmReplica
 metadata:
+  namespace: obm-src
   name: obmreplica-sample
 spec:
-  watchNamespace:
-    name: "obm-src"
+  targetNamespace:
+    name: obm-dist
